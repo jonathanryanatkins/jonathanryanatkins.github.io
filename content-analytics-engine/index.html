@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Content Creation Analytics Engine | Jonathan Atkins</title>
+<meta name="description" content="Enter a topic, find today's most engaged YouTube videos on it by likes and comments, and get the five themes viewers are discussing as suggested topics for content creation.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ground:#F7F5F3;--surface:#FFFFFF;--ink:#1C1714;--muted:#5E5650;--faint:#8C847E;--line:#E6E1DC;--line-soft:#F0ECE8;
+  --accent:#B83D0F;--accent-dark:#8F2E0A;--accent-soft:#FCEDE5;--bar:#2a78d6;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5}
+a{color:var(--accent)}a:hover{color:var(--accent-dark)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.topbar{background:var(--ink);color:#EEE8E3;font-size:13px;padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between}
+.topbar a{color:#F7B999;font-weight:500}
+.wrap{max-width:1180px;margin:0 auto;padding:32px 20px 64px;display:flex;flex-direction:column;gap:24px}
+.hero h1{margin:0;font-size:32px;font-weight:600;letter-spacing:-.015em}
+.hero p{margin:8px 0 0;color:var(--muted);max-width:760px}
+.flow{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;font-size:13px;color:var(--muted)}
+.flow span{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px}
+.flow b{color:var(--accent);font-weight:600}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;min-width:0}
+.panel-head{padding:18px 22px 0}
+.panel-head h2{margin:0;font-size:18px;font-weight:600}
+.panel-head p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.panel-body{padding:18px 22px 22px}
+
+form{display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:500}
+.field .help{font-weight:400;color:var(--muted);font-size:13px}
+input.big{min-height:52px;font-size:17px;border:1px solid #CFC7C0;border-radius:10px;padding:0 14px;background:#fff}
+input.std,select{min-height:44px;border:1px solid #CFC7C0;border-radius:9px;padding:0 12px;background:#fff}
+input:focus,select:focus{outline:3px solid #F7C8AE;outline-offset:1px;border-color:var(--accent)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.examples{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.ex{min-height:36px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:0 12px;font-size:13px}
+.ex:hover{border-color:var(--accent);color:var(--accent-dark)}
+details.key{border:1px solid var(--line);border-radius:10px;padding:0 14px;background:#FCFBFA}
+details.key summary{min-height:44px;display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:500;font-size:14px}
+details.key[open]{padding-bottom:14px}
+.key-status{margin-left:auto;font-weight:400;font-size:13px;color:var(--muted)}
+.steps-help{margin:8px 0 0;padding-left:18px;font-size:13px;color:var(--muted)}
+.btn{min-height:48px;padding:0 20px;border-radius:10px;border:1px solid transparent;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-dark)}
+.btn-primary:disabled{background:#D7A894;cursor:not-allowed}
+.btn-quiet{background:#fff;border-color:var(--line);color:var(--muted);font-weight:500}
+.btn-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.note{font-size:13px;color:var(--muted);margin:0}
+
+.progress{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.pstep{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px}
+.pstep .dot{width:22px;height:22px;border-radius:11px;flex:none;border:2px solid #CFC7C0;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.pstep.active .dot{border-color:var(--accent);border-top-color:transparent;animation:spin .8s linear infinite}
+.pstep.done .dot{border-color:#1E6B3A;background:#1E6B3A}
+.pstep.done .dot::after{content:'';width:6px;height:10px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.pstep.fail .dot{border-color:#9B1C1C;background:#9B1C1C}
+.pstep small{display:block;color:var(--muted);font-size:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.pstep.active .dot{animation:none}}
+.alert{border-radius:10px;padding:12px 14px;font-size:14px}
+.alert.err{background:#FBE3E3;color:#7A1A1A}.alert.info{background:#FFF4D6;color:#4F3D00}
+
+.summary{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:baseline}
+.summary h2{margin:0;font-size:22px;font-weight:600}
+.summary .note{font-size:14px}
+.badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent-dark)}
+
+.themes{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.theme{padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.theme-top{display:flex;gap:12px;align-items:flex-start}
+.rank{width:34px;height:34px;border-radius:10px;background:var(--accent);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none}
+.theme h3{margin:0;font-size:19px;font-weight:600;line-height:1.3}
+.theme .why{font-size:13px;color:var(--muted)}
+.meter{display:flex;gap:3px}
+.meter i{flex:1;height:6px;border-radius:2px;background:var(--line-soft)}
+.meter i.on{background:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12px;padding:2px 9px;border-radius:999px;background:var(--line-soft);color:#3D3530}
+.idea{background:#FCFBFA;border:1px solid var(--line-soft);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.idea .k{font-size:12px;font-weight:600;color:var(--accent-dark);text-transform:uppercase;letter-spacing:.04em}
+.idea p{margin:0;font-size:14px}
+blockquote{margin:0;font-size:14px;color:#3D3530;border-left:3px solid var(--line);padding-left:10px}
+blockquote span{display:block;font-size:12px;color:var(--faint);margin-top:2px}
+
+.tbl-box{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:760px}
+th{text-align:left;font-weight:600;color:#3D3530;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:13px}
+th.num,td.num{text-align:right;font-variant-numeric:tabular-nums}
+td{padding:12px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+.vid{display:flex;gap:12px;align-items:center;min-width:300px}
+.thumb{width:96px;height:54px;border-radius:6px;object-fit:cover;flex:none;background:var(--line-soft);display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:11px}
+.vid a{font-weight:500;color:var(--ink);text-decoration:none}
+.vid a:hover{color:var(--accent)}
+.vid small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.eng{display:flex;align-items:center;gap:10px;min-width:180px}
+.eng .track{flex:1;height:10px;background:var(--line-soft);border-radius:3px;overflow:hidden}
+.eng .fill{display:block;height:10px;background:var(--bar);border-radius:0 3px 3px 0}
+.eng b{font-variant-numeric:tabular-nums;font-weight:600;min-width:56px;text-align:right}
+.method{font-size:14px;color:#3D3530;display:flex;flex-direction:column;gap:8px}
+.method p{margin:0}
+footer{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="topbar" role="note"><span>Portfolio project by Jonathan Atkins</span><a href="/">Back to portfolio</a></div>
+
+<div class="wrap">
+  <header class="hero">
+    <h1>Content Creation Analytics Engine</h1>
+    <p>Tell it what you want to make content about. It finds the YouTube videos on that topic getting the most likes and comments today, reads what they and their viewers are talking about, and hands back the five themes worth creating content on right now.</p>
+    <div class="flow" aria-label="How it works">
+      <span><b>1</b> Your topic</span><span><b>2</b> Today's top 10 videos by likes and comments</span><span><b>3</b> Read titles, descriptions and comments</span><span><b>4</b> Five suggested topics</span>
+    </div>
+  </header>
+
+  <section class="card" aria-labelledby="h-input">
+    <div class="panel-head"><h2 id="h-input">Topic for analysis</h2><p>Describe the area you create content in. Plain English is fine.</p></div>
+    <div class="panel-body">
+      <form id="form" novalidate>
+        <label class="field" for="topic">Topic
+          <input class="big" id="topic" type="text" autocomplete="off" placeholder="For example: most engaged topics in personal finance in the UK today">
+        </label>
+        <div class="examples"><span>Try:</span>
+          <button type="button" class="ex">most engaged topics in personal finance in the UK today</button>
+          <button type="button" class="ex">home fitness for beginners</button>
+          <button type="button" class="ex">AI tools for small businesses</button>
+        </div>
+        <div class="opts">
+          <label class="field" for="terms">YouTube search terms <span class="help">Worked out from your topic. Edit if you like.</span>
+            <input class="std" id="terms" type="text" autocomplete="off" placeholder="personal finance">
+          </label>
+          <label class="field" for="region">Region
+            <select id="region">
+              <option value="GB" selected>United Kingdom</option><option value="US">United States</option><option value="IE">Ireland</option>
+              <option value="AE">United Arab Emirates</option><option value="AU">Australia</option><option value="CA">Canada</option>
+              <option value="IN">India</option><option value="">Worldwide</option>
+            </select>
+          </label>
+          <label class="field" for="window">Published in
+            <select id="window"><option value="24" selected>The last 24 hours</option><option value="48">The last 48 hours</option><option value="168">The last 7 days</option></select>
+          </label>
+        </div>
+        <details class="key" id="keyBox">
+          <summary>YouTube API key <span class="key-status" id="keyStatus">Not added: you will see the demo</span></summary>
+          <label class="field" for="apikey" style="font-weight:400">Paste your YouTube Data API v3 key
+            <input class="std" id="apikey" type="password" autocomplete="off" placeholder="AIza..." style="font-family:'IBM Plex Mono',monospace;font-size:13px">
+          </label>
+          <ol class="steps-help">
+            <li>Open the <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">Google Cloud console</a> and enable the YouTube Data API v3.</li>
+            <li>Under Credentials, create an API key. It is free; each analysis uses about 110 of the 10,000 daily quota units.</li>
+            <li>Paste it here. It stays in this browser tab and is only sent to YouTube.</li>
+          </ol>
+        </details>
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary" id="runBtn">Find today's themes</button>
+          <span class="note" id="modeNote">No key added, so this runs the demo with sample results.</span>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <section id="progressWrap" hidden aria-live="polite">
+    <div class="progress" id="progress"></div>
+    <div id="alert" style="margin-top:12px"></div>
+  </section>
+
+  <section id="results" hidden>
+    <div class="summary" style="margin-bottom:14px">
+      <h2>Suggested topics for content creation</h2>
+      <span class="badge" id="modeBadge"></span>
+      <p class="note" id="summaryText" style="flex-basis:100%"></p>
+    </div>
+    <div class="themes" id="themes"></div>
+
+    <section class="card" style="margin-top:24px" aria-labelledby="h-vids">
+      <div class="panel-head"><h2 id="h-vids">Today's most engaged videos</h2><p>Ranked by engagement: likes plus comments. These ten are the source for the themes above.</p></div>
+      <div class="panel-body"><div class="tbl-box"><table id="videos"></table></div></div>
+    </section>
+  </section>
+
+  <section class="card" aria-labelledby="h-method">
+    <div class="panel-head"><h2 id="h-method">How it works</h2></div>
+    <div class="panel-body method">
+      <p><b>Finding the videos.</b> The engine searches YouTube for videos on your topic published in the time window and region you chose, takes up to 50 of the most viewed, then ranks them by likes plus comments and keeps the top 10.</p>
+      <p><b>Reading them.</b> For each of the ten it reads the title, tags, description and up to 100 of the most relevant comments. Titles count most, and highly liked comments count more than ignored ones. It uses YouTube's official API only, so it does not scrape transcripts.</p>
+      <p><b>Finding the themes.</b> It looks for phrases that recur across several of the ten videos, groups related phrases (cash ISA, Lifetime ISA, ISA allowance), and favours what viewers discuss in the comments over what creators simply tag. Each theme comes with the evidence behind it and the question viewers are asking most.</p>
+      <p><b>Your privacy.</b> Everything runs in your browser. Your key and topic are sent only to YouTube.</p>
+    </div>
+  </section>
+  <footer>Video data comes from the YouTube Data API. This project is not affiliated with or endorsed by YouTube. Demo results use invented channels and comments.</footer>
+</div>
+
+<script src="demo.js"></script>
+<script src="themes.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
