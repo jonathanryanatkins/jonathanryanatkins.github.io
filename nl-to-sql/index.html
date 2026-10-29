@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Natural Language to SQL | Jonathan Atkins</title>
+<meta name="description" content="Upload a spreadsheet or CSV, ask a question in plain English, see how it was understood and the SQL it becomes, then get the answer. Runs entirely in your browser.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ground:#F3F6F6;--surface:#FFFFFF;--ink:#13201F;--muted:#55625F;--line:#DCE3E2;--line-soft:#EBF0EF;
+  --accent:#0F766E;--accent-dark:#0B5A54;--accent-soft:#E2F2F0;--code:#0E1A19;--code-ink:#E6F1EF;
+  --warn-bg:#FFF1C7;--warn-ink:#5C4300;--err-bg:#FCE6D6;--err-ink:#7E3507;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5}
+a{color:var(--accent)}a:hover{color:var(--accent-dark)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+code,.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.topbar{background:var(--ink);color:#E4ECEA;font-size:13px;padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center}
+.topbar a{color:#9FE0D6;font-weight:500}
+.wrap{max-width:1240px;margin:0 auto;padding:32px 20px 64px}
+header.hero{display:flex;flex-direction:column;gap:8px;margin-bottom:28px}
+header.hero h1{margin:0;font-size:32px;letter-spacing:-.015em;font-weight:600}
+header.hero p{margin:0;color:var(--muted);max-width:720px}
+.privacy{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--accent-dark);background:var(--accent-soft);border-radius:999px;padding:4px 12px;align-self:flex-start;margin-top:4px}
+
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px;align-items:start}
+.full{grid-column:1/-1}
+@media (max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;min-width:0}
+.panel-head{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+.step{width:28px;height:28px;border-radius:14px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex:none}
+.panel-head h2{margin:0;font-size:17px;font-weight:600}
+.panel-head .hint{margin-left:auto;font-size:13px;color:var(--muted)}
+.panel-body{padding:20px;display:flex;flex-direction:column;gap:16px}
+
+.drop{border:2px dashed #B5C7C4;border-radius:12px;padding:24px 16px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;background:#FAFCFC;transition:border-color .15s,background .15s}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop p{margin:0}
+.drop .small{font-size:13px;color:var(--muted)}
+.btn{min-height:44px;padding:0 16px;border-radius:9px;border:1px solid transparent;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:var(--accent-dark)}
+.btn-primary:disabled{background:#9DB8B4;cursor:not-allowed}
+.btn-outline{background:#fff;border-color:var(--accent);color:var(--accent)}
+.btn-outline:hover{background:var(--accent-soft)}
+.btn-quiet{background:transparent;color:var(--muted);border-color:var(--line)}
+.btn-quiet:hover{color:var(--ink);border-color:#B5C7C4}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+.tables{display:flex;flex-direction:column;gap:10px}
+.tcard{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.tcard-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tcard-top strong{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500}
+.tcard-top .meta{font-size:13px;color:var(--muted)}
+.tcard-top .actions{margin-left:auto;display:flex;gap:4px}
+.icon-btn{min-width:44px;min-height:36px;border:0;background:transparent;color:var(--muted);border-radius:8px;font-size:13px;padding:0 8px}
+.icon-btn:hover{background:var(--line-soft);color:var(--ink)}
+.cols{display:flex;flex-wrap:wrap;gap:6px}
+.col-chip{font-size:12px;padding:2px 8px;border-radius:999px;background:var(--line-soft);color:#2E3B39;font-family:'IBM Plex Mono',monospace}
+.col-chip b{font-weight:500;color:var(--accent-dark);margin-left:4px;font-family:'IBM Plex Sans',sans-serif}
+.empty{color:var(--muted);font-size:14px;margin:0}
+.preview{overflow-x:auto;border:1px solid var(--line-soft);border-radius:8px}
+
+label.field{display:flex;flex-direction:column;gap:6px;font-weight:500;font-size:14px}
+textarea.ask{min-height:96px;resize:vertical;border:1px solid #BFCDCB;border-radius:10px;padding:12px 14px;background:#fff;line-height:1.45}
+textarea.ask:focus,textarea.sql:focus,input.key:focus,select:focus{outline:3px solid #9FE0D6;outline-offset:1px;border-color:var(--accent)}
+.examples{display:flex;flex-wrap:wrap;gap:8px}
+.ex{min-height:36px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 12px;font-size:13px;color:#2E3B39;text-align:left}
+.ex:hover{border-color:var(--accent);color:var(--accent-dark)}
+.engine{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:14px;padding-top:12px;border-top:1px solid var(--line-soft)}
+.engine label{display:inline-flex;align-items:center;gap:6px;min-height:36px}
+.engine input[type=radio]{width:18px;height:18px;accent-color:var(--accent)}
+.keybox{display:none;flex-direction:column;gap:6px;width:100%}
+.keybox.show{display:flex}
+input.key{min-height:44px;border:1px solid #BFCDCB;border-radius:9px;padding:0 12px;background:#fff;font-family:'IBM Plex Mono',monospace;font-size:13px}
+.note{font-size:13px;color:var(--muted);margin:0}
+
+.reading{font-size:17px;line-height:1.5;margin:0}
+.steps{margin:0;padding-left:18px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;gap:2px}
+.badge{font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent-dark)}
+.sql-wrap{display:flex;flex-direction:column;gap:8px}
+.sql-label{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:14px;font-weight:500}
+textarea.sql{min-height:150px;resize:vertical;border:0;border-radius:10px;padding:14px 16px;background:var(--code);color:var(--code-ink);font-family:'IBM Plex Mono',monospace;font-size:14px;line-height:1.55;white-space:pre;overflow:auto}
+.placeholder{color:var(--muted);font-size:14px;margin:0;padding:8px 0}
+
+.alert{border-radius:10px;padding:12px 14px;font-size:14px}
+.alert.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.alert.err{background:var(--err-bg);color:var(--err-ink)}
+
+.result-meta{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:14px;color:var(--muted)}
+.result-meta .btn{margin-left:auto}
+.big-answer{font-size:40px;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.big-label{font-size:14px;color:var(--muted)}
+.table-box{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{position:sticky;top:0;background:#F6F9F9;text-align:left;font-weight:600;color:#2E3B39;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line-soft);white-space:nowrap}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+th.num{text-align:right}
+tr:last-child td{border-bottom:0}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner{animation:none}}
+footer{margin-top:40px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+</style>
+</head>
+<body>
+<div class="topbar" role="note">
+  <span>Portfolio project by Jonathan Atkins</span>
+  <a href="/">Back to portfolio</a>
+</div>
+
+<div class="wrap">
+  <header class="hero">
+    <h1>Natural Language to SQL</h1>
+    <p>Upload a spreadsheet or CSV, ask a question in plain English, and see exactly how it was understood and the SQL query it becomes, before the answer comes back.</p>
+    <span class="privacy">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+      Your files stay in your browser. Nothing is uploaded to a server.
+    </span>
+  </header>
+
+  <div class="grid">
+
+    <!-- 1. Upload -->
+    <section class="panel" aria-labelledby="h-upload">
+      <div class="panel-head"><span class="step" aria-hidden="true">1</span><h2 id="h-upload">Upload files</h2></div>
+      <div class="panel-body">
+        <div class="drop" id="drop">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#0F766E" stroke-width="1.6" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <p><strong>Drag files here</strong> or</p>
+          <label class="btn btn-primary" for="file">Choose files<input type="file" id="file" class="sr-only" multiple accept=".csv,.tsv,.txt,.xlsx,.xls,.json,.db,.sqlite,.sqlite3"></label>
+          <p class="small">CSV, TSV, Excel, JSON or SQLite. Each file or sheet becomes a table.</p>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn btn-outline" id="sample">Try the sample data</button>
+          <span class="note">Ten fictional clients and their sales sessions</span>
+        </div>
+        <div aria-live="polite" id="loadStatus"></div>
+        <div class="tables" id="tables"><p class="empty">No tables loaded yet.</p></div>
+      </div>
+    </section>
+
+    <!-- 2. Prompt -->
+    <section class="panel" aria-labelledby="h-ask">
+      <div class="panel-head"><span class="step" aria-hidden="true">2</span><h2 id="h-ask">Ask a question</h2><span class="hint">Ctrl + Enter to run</span></div>
+      <div class="panel-body">
+        <label class="field" for="question">Your question in plain English
+          <textarea class="ask" id="question" placeholder="For example: total contract value by owner"></textarea>
+        </label>
+        <div class="btn-row">
+          <button type="button" class="btn btn-primary" id="askBtn" disabled>Translate and run</button>
+          <button type="button" class="btn btn-quiet" id="clearBtn">Clear</button>
+        </div>
+        <div>
+          <p class="note" style="margin-bottom:8px">Try one of these:</p>
+          <div class="examples" id="examples"><p class="empty">Examples appear once a table is loaded.</p></div>
+        </div>
+        <fieldset class="engine" style="border:0;margin:0;padding:12px 0 0;border-top:1px solid var(--line-soft)">
+          <legend class="sr-only">Translation engine</legend>
+          <span style="font-weight:500">Translate with:</span>
+          <label><input type="radio" name="engine" value="rules" checked> Built-in translator</label>
+          <label><input type="radio" name="engine" value="claude"> Claude (your API key)</label>
+          <div class="keybox" id="keybox">
+            <label class="field" for="apikey" style="font-weight:400">Anthropic API key
+              <input type="password" class="key" id="apikey" autocomplete="off" placeholder="sk-ant-...">
+            </label>
+            <p class="note">The key is kept only in this browser tab. With Claude selected, your question, the table and column names and three sample rows per table are sent to Anthropic's API. Your full files are not.</p>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+
+    <!-- 3. Interpretation and SQL -->
+    <section class="panel full" aria-labelledby="h-interp">
+      <div class="panel-head"><span class="step" aria-hidden="true">3</span><h2 id="h-interp">How your question was understood</h2><span class="hint" id="engineUsed"></span></div>
+      <div class="panel-body" id="interp" aria-live="polite">
+        <p class="placeholder">Ask a question and the interpretation and SQL query will appear here.</p>
+      </div>
+    </section>
+
+    <!-- 4. Response -->
+    <section class="panel full" aria-labelledby="h-result">
+      <div class="panel-head"><span class="step" aria-hidden="true">4</span><h2 id="h-result">Response</h2></div>
+      <div class="panel-body" id="result" aria-live="polite">
+        <p class="placeholder">Results from the query will appear here.</p>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    <span>The built-in translator is rule-based: it understands counts, totals, averages, highest and lowest, grouping ("by owner"), filters ("in London", "over 10,000", "after 2026-10-01", "in October"), sorting and top N, over one table at a time. Claude mode handles freer phrasing and joins across tables.</span>
+    <span>You can edit the SQL in step 3 and run it yourself. Only read-only SELECT queries are allowed.</span>
+  </footer>
+</div>
+
+<script src="vendor/sql-wasm.js"></script>
+<script src="vendor/papaparse.min.js"></script>
+<script src="nl2sql.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

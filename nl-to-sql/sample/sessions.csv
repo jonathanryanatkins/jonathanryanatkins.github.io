@@ -1,0 +1,15 @@
+session_id,client,session_type,session_date,owner,duration_mins,attendees,summary_sent
+S01,Halden Logistics,Initial reach out,2026-09-14,Priya S.,30,2,Yes
+S02,Halden Logistics,Platform demo,2026-09-29,Priya S.,75,6,Yes
+S03,Halden Logistics,Debrief and value review,2026-10-22,Priya S.,60,5,Yes
+S04,Vantor Pharma,Initial reach out,2026-09-10,Tom M.,25,2,Yes
+S05,Vantor Pharma,Platform demo,2026-10-01,Tom M.,90,7,Yes
+S06,Vantor Pharma,Debrief and value review,2026-10-26,Tom M.,55,4,Yes
+S07,Marrow and Finch Insurance,Initial reach out,2026-09-24,Priya S.,30,3,Yes
+S08,Marrow and Finch Insurance,Platform demo,2026-10-15,Priya S.,80,8,Yes
+S09,Osric Engineering,Initial reach out,2026-10-02,Amir K.,20,2,Yes
+S10,Osric Engineering,Platform demo,2026-10-26,Amir K.,70,5,No
+S11,Corvane Health Group,Initial reach out,2026-10-21,Amir K.,35,3,Yes
+S12,Tessaly Energy,Initial reach out,2026-10-19,Tom M.,30,2,Yes
+S13,Lumen Telecom,Initial reach out,2026-10-06,Priya S.,25,2,Yes
+S14,Lumen Telecom,Platform demo,2026-10-27,Priya S.,85,9,No
