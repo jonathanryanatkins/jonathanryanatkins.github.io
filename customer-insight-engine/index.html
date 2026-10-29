@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Customer Insight Engine | Jonathan Atkins</title>
+<meta name="description" content="Classifies hospital complaint tickets into misdiagnosis, clerical, communication and malpractice issues, shows the evidence for each decision, and surfaces second-language communication themes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ground:#F5F5F8;--surface:#FFFFFF;--chart:#FCFCFB;--ink:#16151F;--muted:#55546A;--faint:#8A8999;--line:#E1E0E8;--line-soft:#EEEDF3;
+  --accent:#5B3FA8;--accent-dark:#432C82;--accent-soft:#EFEAFB;
+  --cat-communication:#2a78d6;--cat-clerical:#eb6834;--cat-misdiagnosis:#1baf7a;--cat-malpractice:#eda100;
+  --seq-0:#F2F6FC;--seq-1:#D6E5F8;--seq-2:#ADCBF0;--seq-3:#7BABE6;--seq-4:#4A89DA;--seq-5:#2A6BC2;--seq-6:#1C4E93;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.5}
+a{color:var(--accent)}a:hover{color:var(--accent-dark)}
+button,input,textarea,select{font:inherit;color:inherit}
+button{cursor:pointer}
+[hidden]{display:none!important}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.topbar{background:var(--ink);color:#E6E5EE;font-size:13px;padding:10px 20px;display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;align-items:center}
+.topbar a{color:#CBBEF5;font-weight:500}
+.wrap{max-width:1280px;margin:0 auto;padding:32px 20px 64px;display:flex;flex-direction:column;gap:24px}
+
+.hero{display:flex;flex-wrap:wrap;gap:16px 32px;justify-content:space-between;align-items:flex-end}
+.hero h1{margin:0;font-size:32px;font-weight:600;letter-spacing:-.015em}
+.hero p{margin:6px 0 0;color:var(--muted);max-width:760px}
+.org{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--accent-dark);background:var(--accent-soft);border-radius:999px;padding:4px 12px;margin-top:10px}
+.notice{background:#FFF6DA;color:#4F3D00;border-radius:10px;padding:10px 14px;font-size:13px}
+
+.filters{display:flex;flex-wrap:wrap;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.filters label{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+select,input.search{min-height:44px;border:1px solid #CFCDDA;border-radius:8px;padding:0 12px;background:#fff;color:var(--ink)}
+.chip-row{display:flex;flex-wrap:wrap;gap:6px}
+.chip{min-height:36px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:0 12px;font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.chip[aria-pressed=true]{border-color:var(--ink);background:var(--ink);color:#fff}
+.swatch{width:10px;height:10px;border-radius:3px;display:inline-block;flex:none}
+.filters .spacer{flex:1}
+.btn{min-height:44px;padding:0 16px;border-radius:9px;border:1px solid transparent;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent-dark)}
+.btn-outline{background:#fff;border-color:var(--accent);color:var(--accent)}.btn-outline:hover{background:var(--accent-soft)}
+.btn-quiet{background:#fff;border-color:var(--line);color:var(--muted)}.btn-quiet:hover{color:var(--ink)}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;min-width:0}
+.kpi{padding:18px 20px;display:flex;flex-direction:column;gap:4px}
+.kpi .label{font-size:13px;color:var(--muted)}
+.kpi .value{font-size:34px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.kpi .sub{font-size:13px;color:var(--muted)}
+
+.row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:20px}
+.span-5{grid-column:span 5}.span-7{grid-column:span 7}.span-6{grid-column:span 6}.span-12{grid-column:span 12}
+@media (max-width:980px){.span-5,.span-7,.span-6{grid-column:span 12}}
+.panel-head{padding:16px 20px 0;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;justify-content:space-between}
+.panel-head h2{margin:0;font-size:17px;font-weight:600}
+.panel-head p{margin:0;font-size:13px;color:var(--muted);flex-basis:100%}
+.panel-body{padding:16px 20px 20px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted);margin-bottom:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+
+.catbars{display:flex;flex-direction:column;gap:6px}
+.catbar{display:grid;grid-template-columns:130px minmax(0,1fr) 88px;gap:12px;align-items:center;min-height:44px;border:0;background:transparent;text-align:left;border-radius:8px;padding:0 8px}
+.catbar:hover{background:var(--line-soft)}
+.catbar[aria-pressed=true]{background:var(--accent-soft)}
+.catbar .name{font-weight:500;display:flex;align-items:center;gap:8px}
+.catbar .track{height:14px;background:var(--line-soft);border-radius:4px;overflow:hidden}
+.catbar .fill{height:14px;border-radius:0 4px 4px 0}
+.catbar .num{font-variant-numeric:tabular-nums;text-align:right;font-size:14px}
+.catbar .num span{color:var(--muted)}
+
+svg text{font-family:'IBM Plex Sans',sans-serif}
+.chart-box{width:100%;overflow-x:auto}
+
+.themes{display:flex;flex-direction:column;gap:8px}
+.theme{display:grid;grid-template-columns:minmax(150px,240px) minmax(0,1fr) 40px;gap:12px;align-items:center;font-size:14px}
+.theme .track{height:12px;background:var(--line-soft);border-radius:4px;overflow:hidden}
+.theme .fill{height:12px;background:var(--cat-communication);border-radius:0 4px 4px 0}
+.theme .n{text-align:right;font-variant-numeric:tabular-nums}
+
+.heat-box{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+.heat th,.heat td{padding:6px 8px;text-align:center;white-space:nowrap}
+.heat th{font-weight:500;color:var(--muted)}
+.heat th[scope=row]{text-align:left;color:var(--ink);font-weight:500}
+.heat td{font-variant-numeric:tabular-nums;border-radius:4px;border:2px solid var(--surface);min-width:42px}
+.heat td.zero{color:#B9B8C6}
+.heat td.total{font-weight:600;background:transparent}
+.seq-key{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);margin-top:10px}
+.seq-key i{width:20px;height:10px;display:inline-block;border-radius:2px}
+
+.insights{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:12px}
+.insights li{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.insights .ico{width:28px;height:28px;border-radius:8px;background:var(--accent-soft);color:var(--accent-dark);display:flex;align-items:center;justify-content:center}
+.insights b{font-weight:600}
+
+.explorer-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.explorer-tools input{flex:1 1 240px}
+.tbl-box{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:10px}
+.tickets th{position:sticky;top:0;background:#F8F8FB;text-align:left;font-weight:600;color:#3A394C;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:1}
+.tickets td{padding:10px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.tickets tr.sel td{background:var(--accent-soft)}
+.tickets td.snip{min-width:280px;max-width:460px;color:#3A394C}
+.tickets button.open{border:0;background:transparent;padding:0;text-align:left;color:var(--accent);font-weight:500;font-family:'IBM Plex Mono',monospace;font-size:13px;min-height:24px;white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:999px;background:var(--line-soft);color:#2E2D3C;white-space:nowrap}
+.sev-Critical{background:#FBE3E3;color:#8A1C1C}.sev-High{background:#FCEBDD;color:#8A3D08}.sev-Medium{background:#FFF3CF;color:#5F4700}.sev-Low{background:#EEEDF3;color:#47465A}
+.match{color:#1E6B3A;font-weight:500}.nomatch{color:#8A1C1C;font-weight:500}
+
+.detail{border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:flex;flex-direction:column;gap:14px;background:#FCFCFE}
+.detail h3{margin:0;font-size:16px}
+.meta-grid{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--muted)}
+.meta-grid b{color:var(--ink);font-weight:500}
+.evidence{font-size:15px;line-height:1.7;margin:0;background:#fff;border:1px solid var(--line-soft);border-radius:10px;padding:14px 16px}
+.evidence mark{background:transparent;padding:1px 0;border-bottom:3px solid;color:inherit}
+.scores{display:flex;flex-direction:column;gap:6px}
+.score{display:grid;grid-template-columns:120px minmax(0,1fr) 40px;gap:10px;align-items:center;font-size:13px}
+.score .track{height:10px;background:var(--line-soft);border-radius:4px;overflow:hidden}
+.score .fill{height:10px;border-radius:0 4px 4px 0}
+.score .v{text-align:right;font-variant-numeric:tabular-nums}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+
+.try{display:flex;flex-direction:column;gap:12px}
+textarea.input{min-height:110px;resize:vertical;border:1px solid #CFCDDA;border-radius:10px;padding:12px 14px;background:#fff;line-height:1.5}
+textarea.input:focus,select:focus,input.search:focus{outline:3px solid #CBBEF5;outline-offset:1px;border-color:var(--accent)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.method{font-size:14px;color:#3A394C;display:flex;flex-direction:column;gap:8px}
+.method p{margin:0}
+
+.tooltip{position:fixed;pointer-events:none;background:var(--ink);color:#fff;font-size:12px;line-height:1.45;padding:8px 10px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);z-index:50;max-width:240px;opacity:0;transition:opacity .08s}
+.tooltip b{font-weight:600}
+@media (prefers-reduced-motion:reduce){.tooltip{transition:none}}
+footer{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="topbar" role="note">
+  <span>Portfolio project by Jonathan Atkins</span>
+  <a href="/">Back to portfolio</a>
+</div>
+
+<div class="wrap">
+  <header class="hero">
+    <div>
+      <h1>Customer Insight Engine</h1>
+      <p>Reads patient complaints, sorts each one into misdiagnosis, clerical, communication or malpractice issues, shows the words behind every decision, and surfaces where second-language communication is breaking down.</p>
+      <span class="org" id="orgLabel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 21h18M5 21V7l7-4 7 4v14M10 10h4M12 8v4M9 21v-4h6v4"/></svg>
+        Saffron Bay Hospital, Dubai (fictional)
+      </span>
+    </div>
+    <div class="btn-row" style="display:flex;gap:8px;flex-wrap:wrap">
+      <label class="btn btn-outline" for="upload">Analyse your own complaints<input type="file" id="upload" class="sr-only" accept=".csv,.tsv,.txt"></label>
+      <button type="button" class="btn btn-quiet" id="resetData" hidden>Back to the sample</button>
+    </div>
+  </header>
+
+  <div class="notice" role="note" id="dataNotice">All tickets are synthesised for demonstration. The hospital, patients, staff and events are invented. English is the working language of the hospital and the second language of almost every patient and clinician in this sample.</div>
+
+  <div class="filters" role="group" aria-label="Filters">
+    <label for="deptFilter">Department
+      <select id="deptFilter"><option value="">All departments</option></select>
+    </label>
+    <span style="font-size:14px;color:var(--muted)">Category</span>
+    <div class="chip-row" id="catChips"></div>
+    <span class="spacer"></span>
+    <span class="note" id="filterCount"></span>
+  </div>
+
+  <section class="kpis" aria-label="Headline figures" id="kpis"></section>
+
+  <div class="row">
+    <section class="card span-5" aria-labelledby="h-cat">
+      <div class="panel-head"><h2 id="h-cat">Complaints by category</h2><p>Primary category assigned by the engine. Select a bar to filter.</p></div>
+      <div class="panel-body"><div class="catbars" id="catBars"></div></div>
+    </section>
+    <section class="card span-7" aria-labelledby="h-trend">
+      <div class="panel-head"><h2 id="h-trend">Monthly volume by category</h2><p>Hover a segment for the count.</p></div>
+      <div class="panel-body"><div class="legend" id="trendLegend"></div><div class="chart-box" id="trend"></div></div>
+    </section>
+  </div>
+
+  <div class="row">
+    <section class="card span-6" aria-labelledby="h-themes">
+      <div class="panel-head"><h2 id="h-themes">What goes wrong in communication</h2><p>Themes found in complaints with any communication factor. A complaint can show several themes.</p></div>
+      <div class="panel-body"><div class="themes" id="themes"></div></div>
+    </section>
+    <section class="card span-6" aria-labelledby="h-lang">
+      <div class="panel-head"><h2 id="h-lang">Communication complaints by language pairing</h2><p>Patient's first language against the first language of the staff member involved.</p></div>
+      <div class="panel-body"><div class="heat-box" id="langHeat"></div></div>
+    </section>
+  </div>
+
+  <div class="row">
+    <section class="card span-7" aria-labelledby="h-dept">
+      <div class="panel-head"><h2 id="h-dept">Departments and categories</h2><p>Count of complaints. Darker cells hold more complaints.</p></div>
+      <div class="panel-body"><div class="heat-box" id="deptHeat"></div></div>
+    </section>
+    <section class="card span-5" aria-labelledby="h-ins">
+      <div class="panel-head"><h2 id="h-ins">Key insights</h2><p>Generated from the complaints in view.</p></div>
+      <div class="panel-body"><ul class="insights" id="insights"></ul></div>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="h-exp">
+    <div class="panel-head"><h2 id="h-exp">Ticket explorer</h2><p>Open a ticket to see the evidence the engine used. Where a reviewer label exists, it is shown for comparison.</p></div>
+    <div class="panel-body">
+      <div class="explorer-tools">
+        <label class="sr-only" for="search">Search complaints</label>
+        <input type="search" id="search" class="search" placeholder="Search complaint text, for example interpreter or consent">
+      </div>
+      <div id="detail"></div>
+      <div class="tbl-box" style="margin-top:12px"><table class="tickets" id="tickets"></table></div>
+    </div>
+  </section>
+
+  <div class="row">
+    <section class="card span-7" aria-labelledby="h-try">
+      <div class="panel-head"><h2 id="h-try">Classify a new complaint</h2><p>Paste or type a complaint and the engine will classify it straight away.</p></div>
+      <div class="panel-body try">
+        <label class="sr-only" for="tryText">Complaint text</label>
+        <textarea class="input" id="tryText" placeholder="For example: The nurse explained my discharge medicines very fast in English and I did not understand which tablet to stop."></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-primary" id="tryBtn">Classify</button><button type="button" class="btn btn-quiet" id="tryExample">Use an example</button></div>
+        <div id="tryResult" aria-live="polite"></div>
+      </div>
+    </section>
+    <section class="card span-5" aria-labelledby="h-method">
+      <div class="panel-head"><h2 id="h-method">How the engine works</h2></div>
+      <div class="panel-body method" id="method">
+        <p>Each category has a set of weighted cues, such as "did not understand", "interpreter" or "medical words" for communication, and "invoice", "booking" or "wristband" for clerical issues. A complaint's score for each category is the sum of the cues it contains.</p>
+        <p>The highest score sets the primary category. A close runner-up is reported as a secondary category, because many complaints have more than one cause: a misunderstood instruction can lead to a medication error. Confidence reflects how clearly the top category leads.</p>
+        <p>Everything runs in your browser. Uploaded files are never sent anywhere.</p>
+        <p id="accuracy"></p>
+      </div>
+    </section>
+  </div>
+
+  <footer>Upload format: a CSV with one complaint per row. The engine looks for a column of complaint text, and uses date, department, severity, patient language, staff language and an existing category column when it finds them.</footer>
+</div>
+
+<div class="tooltip" id="tip" role="tooltip"></div>
+
+<script src="../nl-to-sql/vendor/papaparse.min.js"></script>
+<script src="tickets.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
