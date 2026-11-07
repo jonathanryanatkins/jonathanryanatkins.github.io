@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Half Marathon Training</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0f141c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HM Training">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+:root{
+  --bg:#0f141c; --surface:#171e29; --surface2:#1e2734; --ink:#e9edf3; --muted:#97a1b2; --line:#2a3342;
+  --accent:#7b95ff; --accent-soft:#1f2a4a; --race:#ff7a45; --good:#4cc68a; --good-soft:#15301f; --warn:#e2b04f;
+  --band:rgba(123,149,255,.14);
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif;
+  --display:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --tab:64px;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme:light){:root{
+  --bg:#f2f4f7; --surface:#fff; --surface2:#f7f8fa; --ink:#17202d; --muted:#5d6779; --line:#dfe3ea;
+  --accent:#2446c8; --accent-soft:#e3e9fb; --race:#e2541b; --good:#1f8a52; --good-soft:#ddf2e6; --warn:#a86d12;
+  --band:rgba(36,70,200,.09); color-scheme:light}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--font);-webkit-text-size-adjust:100%}
+body{overscroll-behavior-y:none}
+.num{font-variant-numeric:tabular-nums}
+h1,h2,h3{margin:0;font-family:var(--display);letter-spacing:-.01em}
+button,input,select{font:inherit;color:inherit}
+[hidden]{display:none!important}
+
+.screen{padding:calc(env(safe-area-inset-top) + 14px) max(16px,env(safe-area-inset-left)) calc(var(--tab) + env(safe-area-inset-bottom) + 24px) max(16px,env(safe-area-inset-right));max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;padding:4px 2px 2px}
+.top h1{font-size:2rem;font-weight:700;line-height:1.05}
+.top .sub{color:var(--muted);font-size:.9rem;margin-top:2px}
+.label{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px}
+.card h2{font-size:1.15rem;font-weight:700}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+
+/* Hero */
+.hero{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile .v{font-family:var(--display);font-size:2rem;font-weight:700;line-height:1.05}
+.tile.lead{grid-column:1/-1;flex-direction:row;align-items:center;justify-content:space-between;border-color:var(--accent);background:linear-gradient(135deg,var(--accent-soft),var(--surface) 70%)}
+.tile.lead .v{font-size:2.6rem;color:var(--accent)}
+.tile .s{font-size:.82rem;color:var(--muted)}
+.delta{font-family:var(--display);font-weight:700;font-size:1.3rem;text-align:right}
+
+/* Today card */
+.today{border-left:4px solid var(--accent)}
+.today.rest{border-left-color:var(--line)}
+.today .what{font-family:var(--display);font-size:1.45rem;font-weight:700;line-height:1.2;margin:4px 0 2px}
+.today .actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface2);border-radius:12px;padding:11px 16px;font-weight:600;cursor:pointer;min-height:44px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.good{background:var(--good);border-color:var(--good);color:#fff}
+.btn.danger{color:var(--race)}
+.btn.block{width:100%}
+.btn:active{transform:scale(.98)}
+
+/* Week */
+.weekhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.weekhead h2{font-size:1.25rem}
+.bar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;background:var(--good);border-radius:99px;transition:width .3s}
+.chip{display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:99px;background:var(--accent-soft);color:var(--accent);vertical-align:middle;margin-left:4px}
+.chip.cut{background:transparent;border:1px dashed var(--muted);color:var(--muted)}
+.chip.race{background:var(--race);color:#fff}
+
+.list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.sess{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;width:100%;text-align:left;background:var(--surface2);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;min-height:60px}
+.sess.k-workout,.sess.k-tt{border-left-color:var(--accent)}
+.sess.k-long{border-left-color:var(--ink)}
+.sess.k-race{border-left-color:var(--race)}
+.sess.done{background:var(--good-soft);border-color:transparent;border-left-color:var(--good)}
+.sess.is-today{box-shadow:0 0 0 2px var(--accent)}
+.sess .d{display:flex;flex-direction:column;line-height:1.1}
+.sess .d b{font-family:var(--display);font-size:1.05rem}
+.sess .d span{font-size:.72rem;color:var(--muted)}
+.sess .t{min-width:0}
+.sess .t div:first-child{font-weight:600}
+.sess .t div+div{font-size:.82rem;color:var(--muted)}
+.sess .r{font-size:.82rem;text-align:right;white-space:nowrap}
+.sess .r .ok{color:var(--good);font-weight:700;font-size:1.1rem}
+.strength{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.tog{display:flex;align-items:center;gap:8px;border:1px dashed var(--line);border-radius:12px;padding:10px 12px;cursor:pointer;min-height:44px;background:transparent}
+.tog .box{width:20px;height:20px;border-radius:6px;border:2px solid var(--muted);display:grid;place-items:center;font-size:.8rem;color:#fff}
+.tog.on{border-style:solid;border-color:var(--good)}
+.tog.on .box{background:var(--good);border-color:var(--good)}
+
+/* Week picker */
+.weeks{display:flex;gap:6px;overflow-x:auto;scroll-snap-type:x mandatory;padding:2px 2px 8px;margin:0 -2px;scrollbar-width:none}
+.weeks::-webkit-scrollbar{display:none}
+.wk{flex:0 0 auto;scroll-snap-align:center;width:46px;height:56px;border-radius:12px;border:1px solid var(--line);background:var(--surface);position:relative;overflow:hidden;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;font-family:var(--display)}
+.wk small{font-family:var(--font);font-size:.6rem;font-weight:500;color:var(--muted)}
+.wk .f{position:absolute;left:0;right:0;bottom:0;background:var(--good);opacity:.28}
+.wk span,.wk small{position:relative}
+.wk.cut{border-style:dashed}
+.wk.now{border-color:var(--accent);color:var(--accent)}
+.wk.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+.wk.sel small{color:#fff}
+.wk.race{border-color:var(--race)}
+
+/* Progress */
+svg text{font-size:10px;fill:var(--muted);font-family:var(--font)}
+.paces{display:flex;flex-direction:column;margin-top:6px}
+.pace{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.pace:last-child{border-bottom:0}
+.pace b{font-weight:600}
+.pace small{display:block;color:var(--muted);font-size:.78rem}
+.pace .num{font-family:var(--display);font-weight:700;font-size:1.1rem}
+.hist{display:flex;flex-direction:column}
+.hrow{display:grid;grid-template-columns:1fr auto auto;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.9rem;align-items:center}
+.hrow:last-child{border-bottom:0}
+.hrow .num{text-align:right}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats3 .tile .v{font-size:1.5rem}
+
+/* More */
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.stack{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.steps{margin:8px 0 0;padding-left:20px}
+.steps li{margin:4px 0}
+
+/* Tab bar */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:grid;grid-template-columns:repeat(4,1fr);background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
+.tabs button{appearance:none;background:none;border:0;height:var(--tab);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:.68rem;font-weight:600;color:var(--muted);cursor:pointer}
+.tabs button svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.tabs button[aria-current="page"]{color:var(--accent)}
+
+/* Sheet */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:30;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.open{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:31;background:var(--surface);border-radius:20px 20px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));max-width:620px;margin:0 auto;transform:translateY(105%);visibility:hidden;transition:transform .25s ease,visibility 0s .25s;max-height:92vh;overflow-y:auto}
+.sheet.open{transform:none;visibility:visible;transition:transform .25s ease}
+.grab{width:40px;height:5px;border-radius:99px;background:var(--line);margin:0 auto 12px}
+.sheet h3{font-size:1.3rem}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field.full{grid-column:1/-1}
+.field label{font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.field input,.field select{width:100%;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:1.1rem;min-height:48px}
+.field input:focus,.field select:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.time{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+.time input{text-align:center}
+.calc{margin-top:10px;font-size:.92rem;color:var(--muted);min-height:1.4em}
+.calc b{color:var(--ink)}
+.err{color:var(--race);font-size:.88rem;margin-top:6px}
+.sheet .actions{display:flex;gap:8px;margin-top:16px}
+.sheet .actions .btn{flex:1}
+.toast{position:fixed;left:50%;bottom:calc(var(--tab) + env(safe-area-inset-bottom) + 14px);transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:99px;font-weight:600;font-size:.9rem;opacity:0;transition:.2s;z-index:40;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%)}
+.install{border-color:var(--warn)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- TODAY -->
+<main class="screen" id="v-today">
+  <header class="top">
+    <div><div class="label" id="tPhase"></div><h1 id="tTitle">Today</h1><div class="sub" id="tDate"></div></div>
+  </header>
+  <section class="card install" id="installTip" hidden>
+    <h2>Install on your iPhone</h2>
+    <p class="small muted" style="margin:6px 0 0">In Safari, tap the Share button, then <b>Add to Home Screen</b>. It will open full screen and work offline.</p>
+  </section>
+  <section class="card today" id="todayCard"></section>
+  <section class="hero">
+    <div class="tile lead"><div><span class="label">Projected finish</span><div class="v num" id="hProj">–</div><span class="s" id="hProjS"></span></div><div class="delta num" id="hDelta"></div></div>
+    <div class="tile"><span class="label">Race day</span><span class="v num" id="hDays">–</span><span class="s">days to go</span></div>
+    <div class="tile"><span class="label">This week</span><span class="v num" id="hWeekKm">–</span><span class="s" id="hWeekS"></span></div>
+  </section>
+  <section class="card" id="thisWeek"></section>
+</main>
+
+<!-- PLAN -->
+<main class="screen" id="v-plan" hidden>
+  <header class="top"><div><div class="label">24 weeks + buffer</div><h1>Plan</h1></div><button class="btn" id="jumpNow" type="button">This week</button></header>
+  <nav class="weeks" id="weeks" aria-label="Weeks"></nav>
+  <section class="card" id="planWeek"></section>
+</main>
+
+<!-- PROGRESS -->
+<main class="screen" id="v-progress" hidden>
+  <header class="top"><div><div class="label" id="pGoalLbl"></div><h1>Progress</h1></div></header>
+  <section class="card">
+    <h2>Projected half marathon time</h2>
+    <p class="small muted" style="margin:4px 0 6px">Filled points are time trials; open points are estimates from easy runs.</p>
+    <svg id="chart" viewBox="0 0 360 220" width="100%" role="img" aria-label="Projected finish time by week"></svg>
+  </section>
+  <section class="stats3">
+    <div class="tile"><span class="label">Km</span><span class="v num" id="sKm">–</span><span class="s" id="sKmS"></span></div>
+    <div class="tile"><span class="label">Runs</span><span class="v num" id="sRuns">–</span><span class="s">logged</span></div>
+    <div class="tile"><span class="label">Strength</span><span class="v num" id="sStr">–</span><span class="s">sessions</span></div>
+  </section>
+  <section class="card"><h2>Your paces now</h2><div class="paces" id="paces"></div><p class="small muted" style="margin:8px 0 0">Worked out from your current projection, so they update as you log runs, especially after the time trials in weeks 8 and 16.</p></section>
+  <section class="card"><h2>Run history</h2><div class="hist" id="hist"></div></section>
+</main>
+
+<!-- MORE -->
+<main class="screen" id="v-more" hidden>
+  <header class="top"><div><div class="label">Settings</div><h1>More</h1></div></header>
+  <section class="card">
+    <h2>Goal time</h2>
+    <div class="fields" style="grid-template-columns:1fr auto">
+      <div class="field"><label for="goalIn">Target finish (h:mm:ss)</label><input id="goalIn" inputmode="numeric" autocomplete="off"></div>
+      <div class="field" style="justify-content:flex-end"><button class="btn primary" id="goalSave" type="button">Save</button></div>
+    </div>
+    <p class="small muted" id="goalPace" style="margin:8px 0 0"></p>
+  </section>
+  <section class="card">
+    <h2>Back up your runs</h2>
+    <p class="small muted" style="margin:6px 0 0">Your log is saved on this phone only. Export a backup now and then, and especially before changing phones or clearing Safari data.</p>
+    <div class="stack">
+      <button class="btn primary block" id="exportBtn" type="button">Export backup</button>
+      <button class="btn block" id="importBtn" type="button">Restore from backup</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+  </section>
+  <section class="card">
+    <h2>How the projection works</h2>
+    <p class="small muted" style="margin:6px 0 0">Time trials and races use the Riegel formula, the standard way of scaling a race result to a longer distance. Easy and long runs give a rougher estimate: half marathon pace is taken as about 45 seconds per km faster than your conversational pace. A time trial in the last four weeks takes priority over easy-run estimates. Workouts are logged but left out, because their times mix warm-ups and recoveries.</p>
+  </section>
+  <section class="card">
+    <h2>Install</h2>
+    <ol class="steps small muted">
+      <li>Open this page in <b>Safari</b> on your iPhone.</li>
+      <li>Tap the <b>Share</b> button.</li>
+      <li>Choose <b>Add to Home Screen</b>, then <b>Add</b>.</li>
+    </ol>
+  </section>
+  <section class="card">
+    <div class="row"><span>Runs stored on this phone</span><span class="num" id="mCount">–</span></div>
+    <div class="row"><span>App version</span><span class="num muted">1.0</span></div>
+    <div class="stack"><button class="btn danger block" id="resetBtn" type="button">Erase all logged runs</button></div>
+  </section>
+</main>
+
+<nav class="tabs" aria-label="Sections">
+  <button type="button" data-v="today" aria-current="page"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Today</button>
+  <button type="button" data-v="plan"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Plan</button>
+  <button type="button" data-v="progress"><svg viewBox="0 0 24 24"><path d="M3 20h18"/><path d="M5 16l4-5 4 3 6-8"/></svg>Progress</button>
+  <button type="button" data-v="more"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/></svg>More</button>
+</nav>
+
+<div class="scrim" id="scrim"></div>
+<form class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle" novalidate>
+  <div class="grab"></div>
+  <div class="label" id="shWhen"></div>
+  <h3 id="shTitle"></h3>
+  <div class="small muted" id="shPlan"></div>
+  <div class="fields">
+    <div class="field"><label for="fKm">Distance (km)</label><input id="fKm" inputmode="decimal" autocomplete="off" enterkeyhint="next"></div>
+    <div class="field"><label for="fKind">Type</label><select id="fKind"><option value="easy">Easy</option><option value="long">Long run</option><option value="workout">Workout</option><option value="tt">Time trial</option><option value="race">Race</option></select></div>
+    <div class="field full"><label>Time (hours, minutes, seconds)</label>
+      <div class="time"><input id="fH" inputmode="numeric" placeholder="h" aria-label="Hours" autocomplete="off"><input id="fM" inputmode="numeric" placeholder="min" aria-label="Minutes" autocomplete="off"><input id="fS" inputmode="numeric" placeholder="sec" aria-label="Seconds" autocomplete="off"></div>
+    </div>
+    <div class="field full"><label for="fNote">Note</label><input id="fNote" placeholder="How it felt" maxlength="200" autocomplete="off" enterkeyhint="done"></div>
+  </div>
+  <div class="calc num" id="shCalc"></div>
+  <div class="err" id="shErr" hidden></div>
+  <div class="actions"><button class="btn" type="button" id="shCancel">Cancel</button><button class="btn primary" type="submit" id="shSave">Save run</button></div>
+  <div class="actions"><button class="btn danger" type="button" id="shClear" hidden>Clear this run</button></div>
+</form>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+"use strict";
+const HM = 21.0975;
+const START = new Date(2026, 8, 28);   // Mon 28 Sep 2026, week 1
+const RACE  = new Date(2027, 2, 17);   // Wed 17 Mar 2027
+const DAYS = {Mon:0,Tue:1,Wed:2,Thu:3,Fri:4,Sat:5,Sun:6};
+const DAYNAMES = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const KEY = "hm-log-v1", SKEY = "hm-settings-v1";
+
+const S = (d,km,t,k)=>({day:d,km,text:t,kind:k||"easy"});
+const W = [
+ {n:"1",ph:1,s:[S("Wed",5,"5 km easy"),S("Fri",5,"5 km easy"),S("Sun",6,"6 km long run","long")]},
+ {n:"2",ph:1,s:[S("Tue",5,"5 km easy"),S("Thu",6,"6 km easy"),S("Sun",7,"7 km long run","long")]},
+ {n:"3",ph:1,s:[S("Tue",6,"6 km easy"),S("Thu",6,"6 km easy"),S("Sun",8,"8 km long run","long")]},
+ {n:"4",ph:1,cut:1,s:[S("Tue",5,"5 km easy"),S("Thu",5,"5 km easy"),S("Sun",6,"6 km long run","long")]},
+ {n:"5",ph:1,s:[S("Tue",6,"6 km easy"),S("Thu",7,"7 km easy"),S("Sun",9,"9 km long run","long")]},
+ {n:"6",ph:1,s:[S("Tue",6,"6 km easy + 6 × 20 s strides","workout"),S("Thu",7,"7 km easy"),S("Sun",10,"10 km long run","long")]},
+ {n:"7",ph:2,s:[S("Tue",6,"6 km easy + 6 × 20 s strides","workout"),S("Thu",7,"7 km easy"),S("Sat",4,"4 km easy"),S("Sun",11,"11 km long run","long")]},
+ {n:"8",ph:2,cut:1,s:[S("Tue",5,"5 km easy + strides","workout"),S("Thu",8,"5 km time trial (8 km with warm-up)","tt"),S("Sat",4,"4 km easy"),S("Sun",9,"9 km long run","long")]},
+ {n:"9",ph:2,s:[S("Tue",8,"8 km with 6 × 60 s hills","workout"),S("Thu",7,"7 km easy"),S("Sat",5,"5 km easy"),S("Sun",12,"12 km long run","long")]},
+ {n:"10",ph:2,s:[S("Tue",8,"8 km with 8 × 60 s hills","workout"),S("Thu",8,"8 km easy"),S("Sat",5,"5 km easy"),S("Sun",13,"13 km long run","long")]},
+ {n:"11",ph:2,s:[S("Tue",9,"9 km with 3 × 8 min tempo","workout"),S("Thu",8,"8 km easy"),S("Sat",5,"5 km easy"),S("Sun",14,"14 km long run","long")]},
+ {n:"12",ph:2,cut:1,s:[S("Tue",6,"6 km easy + strides","workout"),S("Thu",6,"6 km easy"),S("Sat",5,"5 km easy"),S("Sun",10,"10 km long run","long")]},
+ {n:"13",ph:3,s:[S("Tue",10,"10 km with 3 × 10 min tempo","workout"),S("Thu",8,"8 km easy"),S("Sat",5,"5 km easy"),S("Sun",14,"14 km long run","long")]},
+ {n:"14",ph:3,s:[S("Tue",10,"10 km with 5 × 1 km at 10k pace","workout"),S("Thu",8,"8 km easy"),S("Sat",6,"6 km easy"),S("Sun",15,"15 km long run","long")]},
+ {n:"15",ph:3,s:[S("Tue",10,"10 km with 20 min continuous tempo","workout"),S("Thu",8,"8 km easy"),S("Sat",6,"6 km easy"),S("Sun",16,"16 km long run","long")]},
+ {n:"16",ph:3,cut:1,s:[S("Tue",7,"7 km easy + strides","workout"),S("Thu",6,"6 km easy"),S("Sun",13,"10 km time trial or race (13 km total)","tt")]},
+ {n:"17",ph:3,s:[S("Tue",11,"11 km with 6 × 1 km at 10k pace","workout"),S("Thu",9,"9 km easy"),S("Sat",6,"6 km easy"),S("Sun",17,"17 km long run","long")]},
+ {n:"18",ph:3,s:[S("Tue",11,"11 km with 2 × 15 min tempo","workout"),S("Thu",9,"9 km easy"),S("Sat",6,"6 km easy"),S("Sun",18,"18 km, last 3 at race pace","long")]},
+ {n:"19",ph:4,s:[S("Tue",12,"12 km with 5 × 1.6 km at tempo","workout"),S("Thu",9,"9 km easy"),S("Sat",6,"6 km easy"),S("Sun",19,"19 km, last 5 at race pace","long")]},
+ {n:"20",ph:4,cut:1,s:[S("Tue",8,"8 km with 3 km at race pace","workout"),S("Thu",8,"8 km easy"),S("Sat",5,"5 km easy"),S("Sun",13,"13 km easy long run","long")]},
+ {n:"21",ph:4,s:[S("Tue",13,"13 km with 3 × 3 km at race pace","workout"),S("Thu",9,"9 km easy"),S("Sat",6,"6 km easy"),S("Sun",20,"20 km, km 10 to 18 at race pace","long")]},
+ {n:"22",ph:4,s:[S("Tue",11,"11 km with 6 × 1 km at 10k pace","workout"),S("Thu",9,"9 km easy"),S("Sat",6,"6 km easy"),S("Sun",16,"16 km with 8 at race pace","long")]},
+ {n:"B",ph:0,s:[S("Tue",11,"Catch-up, or repeat week 22's 6 × 1 km","workout"),S("Thu",9,"9 km easy"),S("Sat",6,"6 km easy"),S("Sun",16,"16 km with 8 at race pace, or catch-up","long")]},
+ {n:"23",ph:5,s:[S("Tue",9,"9 km with 3 × 2 km at race pace","workout"),S("Thu",7,"7 km easy"),S("Sat",5,"5 km easy + strides","workout"),S("Sun",10,"10 km easy","long")]},
+ {n:"24",ph:5,race:1,s:[S("Mon",5,"5 km easy + 4 strides","workout"),S("Tue",3,"Rest, or 2 to 3 km shakeout"),S("Wed",21.1,"RACE DAY: half marathon","race")]}
+];
+const PHASES = {0:"Buffer week",1:"Phase 1 · Rebuild",2:"Phase 2 · Base",3:"Phase 3 · Build",4:"Phase 4 · Race-specific",5:"Phase 5 · Taper"};
+const strengthDays = i => i<=22 ? ["Mon","Fri"] : (i===23 ? ["Mon"] : []);
+const STRENGTH = "Calf raises, split squats, single-leg RDL, bridges, side plank, dead bug (20 to 25 min)";
+
+// Runs already logged in the Claude tracker, loaded on first launch
+const SEED = {
+ "baseline":{week:-1,day:"Test",km:5.5,sec:1980,kind:"tt",date:"2026-09-30"},
+ "w00-wed":{week:0,day:"Wed",km:5,sec:1806,kind:"easy",date:"2026-09-30"},
+ "w00-fri":{week:0,day:"Fri",km:5.01,sec:1806,kind:"easy",date:"2026-10-02"},
+ "w00-sun":{week:0,day:"Sun",km:6,sec:2085,kind:"long",date:"2026-10-04"},
+ "w01-tue":{week:1,day:"Tue",km:6,sec:2024,kind:"easy",date:"2026-10-06"},
+ "w01-sun":{week:1,day:"Sun",km:5,sec:1750,kind:"long",date:"2026-10-11"},
+ "w03-thu":{week:3,day:"Thu",km:5,sec:1894,kind:"easy",date:"2026-10-22"},
+ "w04-tue":{week:4,day:"Tue",km:5.5,sec:1875,kind:"easy",date:"2026-10-27"},
+ "w04-sun":{week:4,day:"Sun",km:8,sec:2752,kind:"long",date:"2026-11-01"},
+ "w05-tue":{week:5,day:"Tue",km:6,sec:2024,kind:"workout",date:"2026-11-03"},
+ "w05-thu":{week:5,day:"Thu",km:7.01,sec:2300,kind:"easy",date:"2026-11-05"}
+};
+
+// ---------- storage ----------
+function load(k,def){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):def; }catch(e){ return def; } }
+function save(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); return true; }catch(e){ toast("Couldn't save on this phone"); return false; } }
+let settings = load(SKEY, null);
+let log = load(KEY, null);
+if(!settings){ settings={goal:5940, seeded:false}; }
+if(!log){ log={}; }
+if(!settings.seeded){ log=Object.assign({}, SEED, log); settings.seeded=true; save(KEY,log); save(SKEY,settings); }
+if(navigator.storage && navigator.storage.persist){ navigator.storage.persist().catch(()=>{}); }
+
+// ---------- helpers ----------
+const $ = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,"0");
+const DAY = 864e5;
+// Calendar-day arithmetic, so the clocks changing never shifts a date
+const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+const daysBetween = (a,b) => Math.round((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/DAY);
+const wkStart = i => addDays(START, i*7);
+const dayDate = (i,d) => addDays(START, i*7+DAYS[d]);
+const fmtD = d => d.toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+const fmtLong = d => d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"});
+const isoD = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const docId = (i,key) => "w"+pad(i)+"-"+key.toLowerCase();
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function fmtT(sec){ if(sec==null||!isFinite(sec)) return "–"; sec=Math.round(sec); const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60; return h? h+":"+pad(m)+":"+pad(s) : m+":"+pad(s); }
+function fmtP(spk){ if(!isFinite(spk)) return "–"; spk=Math.round(spk); return Math.floor(spk/60)+":"+pad(spk%60); }
+function parseT(str){ str=(str||"").trim(); if(!/^\d{1,2}(:\d{1,2}){1,2}$/.test(str)) return null; const p=str.split(":").map(Number); return p.length===3? p[0]*3600+p[1]*60+p[2] : p[0]*60+p[1]; }
+function todayDate(){ const t=new Date(); t.setHours(0,0,0,0); return t; }
+function weekIndexFor(d){ return Math.max(0,Math.min(W.length-1,Math.floor(daysBetween(START,d)/7))); }
+const wkName = i => W[i].n==="B" ? "Buffer week" : "Week "+W[i].n;
+let toastT;
+function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),1800); }
+function haptic(){ try{ navigator.vibrate && navigator.vibrate(10); }catch(e){} }
+
+// ---------- projection ----------
+function estimate(e){
+  if(!e||!e.km||!e.sec) return null;
+  if(e.kind==="tt"||e.kind==="race") return {t:e.sec*Math.pow(HM/e.km,1.06),tt:true};
+  if(e.kind==="easy"||e.kind==="long") return {t:(e.sec/e.km-45)*HM,tt:false};
+  return null;
+}
+function weekly(){
+  const out=[];
+  for(let i=-1;i<W.length;i++){
+    const es=Object.values(log).filter(e=>e.week===i).map(estimate).filter(Boolean);
+    if(!es.length){ out.push(null); continue; }
+    const tts=es.filter(x=>x.tt);
+    if(tts.length) out.push({i,t:Math.min(...tts.map(x=>x.t)),tt:true});
+    else { const ts=es.map(x=>x.t).sort((a,b)=>a-b); out.push({i,t:ts[Math.floor(ts.length/2)],tt:false}); }
+  }
+  return out;
+}
+function current(ws){
+  const pts=ws.filter(Boolean); if(!pts.length) return null;
+  const last=pts[pts.length-1];
+  const recentTT=pts.filter(p=>p.tt&&p.i>=0&&last.i-p.i<=4).pop();
+  if(recentTT&&recentTT!==last&&!last.tt) return {t:recentTT.t,src:"From your week "+W[recentTT.i].n+" time trial"};
+  return {t:last.t,src:last.i<0?"From your starting test":(last.tt?"From your time trial, week ":"From easy runs, week ")+W[last.i].n};
+}
+function weekStats(i){
+  let plan=0,done=0,n=0,d=0;
+  W[i].s.forEach(s=>{ plan+=s.km; n++; const e=log[docId(i,s.day)]; if(e&&e.km){ done+=e.km; d++; } });
+  return {plan,done,n,d};
+}
+
+// ---------- views ----------
+let view="today", sel=weekIndexFor(todayDate());
+
+function sessionBtn(i,s){
+  const id=docId(i,s.day), e=log[id], dt=dayDate(i,s.day), done=!!(e&&e.km&&e.sec);
+  const isToday = isoD(dt)===isoD(todayDate());
+  const right = done ? `<div class="ok">✓</div><div class="num">${e.km} km · ${fmtT(e.sec)}</div><div class="num muted">${fmtP(e.sec/e.km)}/km</div>` : `<div class="muted">${s.km} km</div>`;
+  return `<button type="button" class="sess k-${s.kind} ${done?"done":""} ${isToday?"is-today":""}" data-i="${i}" data-day="${s.day}">
+    <div class="d"><b>${s.day}</b><span>${fmtD(dt)}</span></div>
+    <div class="t"><div>${esc(s.text)}</div><div>${done?(e.note?esc(e.note):"Logged"):(isToday?"Today · tap to log":"Tap to log")}</div></div>
+    <div class="r">${right}</div></button>`;
+}
+function strengthHTML(i){
+  const sd=strengthDays(i); if(!sd.length) return "";
+  return `<div class="strength">${sd.map(d=>{ const id=docId(i,"str-"+d), on=log[id]&&log[id].done; return `<button type="button" class="tog ${on?"on":""}" data-str="${id}" data-i="${i}" aria-pressed="${on?"true":"false"}"><span class="box">${on?"✓":""}</span><span>Strength · ${d} ${fmtD(dayDate(i,d))}</span></button>`; }).join("")}</div><p class="small muted" style="margin:8px 0 0">${STRENGTH}</p>`;
+}
+function weekCard(i, withHead){
+  const w=W[i], st=weekStats(i), pct=st.plan?Math.min(100,st.done/st.plan*100):0;
+  const chips=(w.cut?'<span class="chip cut">Cutback</span>':"")+(w.race?'<span class="chip race">Race week</span>':"")+(i===weekIndexFor(todayDate())?'<span class="chip">Now</span>':"");
+  return `<div class="weekhead"><div><div class="label">${PHASES[w.ph]}</div><h2>${wkName(i)} ${chips}</h2><div class="small muted">${fmtD(wkStart(i))} to ${fmtD(addDays(wkStart(i),6))}</div></div></div>
+    <div class="bar"><i style="width:${pct}%"></i></div>
+    <div class="small muted num">${st.d} of ${st.n} runs · ${Math.round(st.done*10)/10} of ${Math.round(st.plan*10)/10} km</div>
+    <div class="list">${w.s.map(s=>sessionBtn(i,s)).join("")}</div>${strengthHTML(i)}`;
+}
+
+function renderToday(){
+  const t=todayDate(), i=weekIndexFor(t), w=W[i];
+  $("tPhase").textContent = PHASES[w.ph]+" · "+wkName(i);
+  $("tDate").textContent = fmtLong(t);
+  const dn = DAYNAMES[(t.getDay()+6)%7];
+  const s = (t>=START && t<=RACE) ? w.s.find(x=>x.day===dn && isoD(dayDate(i,x.day))===isoD(t)) : null;
+  const strengthToday = strengthDays(i).includes(dn) && t>=START;
+  let html;
+  if(t<START){ html=`<div class="label">Starts soon</div><div class="what">Plan starts ${fmtLong(START)}</div>`; }
+  else if(t>RACE){ html=`<div class="label">Done</div><div class="what">Race complete. Well run.</div>`; }
+  else if(s){
+    const e=log[docId(i,s.day)], done=e&&e.km&&e.sec;
+    html=`<div class="label">Today's session</div><div class="what">${esc(s.text)}</div>
+      <div class="small muted">${done?`Logged: ${e.km} km in ${fmtT(e.sec)} (${fmtP(e.sec/e.km)}/km)`:paceHint(s.kind)}</div>
+      <div class="actions"><button class="btn ${done?"":"primary"}" type="button" data-log="${i}|${s.day}">${done?"Edit run":"Log this run"}</button></div>`;
+  } else {
+    const nxt = nextSession(t);
+    html=`<div class="label">Today</div><div class="what">${strengthToday?"Strength day":"Rest day"}</div>
+      <div class="small muted">${strengthToday?STRENGTH:"Recovery is part of the plan."}</div>
+      ${strengthToday?`<div class="actions">${(()=>{const id=docId(i,"str-"+dn), on=log[id]&&log[id].done; return `<button class="btn ${on?"good":"primary"}" type="button" data-str="${id}" data-i="${i}">${on?"✓ Strength done":"Mark strength done"}</button>`;})()}</div>`:""}
+      ${nxt?`<p class="small" style="margin:12px 0 0"><span class="muted">Next run:</span> <b>${nxt.s.day} ${fmtD(dayDate(nxt.i,nxt.s.day))}</b> · ${esc(nxt.s.text)}</p>`:""}`;
+  }
+  const card=$("todayCard"); card.className="card today"+(s?"":" rest"); card.innerHTML=html;
+
+  const cur=current(weekly());
+  $("hProj").textContent = cur?fmtT(cur.t):"–";
+  $("hProjS").textContent = cur?cur.src:"Log a run to see it";
+  if(cur){ const d=cur.t-settings.goal; const el=$("hDelta"); el.innerHTML=`${d<=0?"−":"+"}${fmtT(Math.abs(d))}<div class="small muted" style="font-family:var(--font);font-weight:500">vs ${fmtT(settings.goal)} goal</div>`; el.style.color=d<=0?"var(--good)":(d<=240?"var(--warn)":"var(--race)"); }
+  const days=daysBetween(t,RACE);
+  $("hDays").textContent = days>0?days:(days===0?"Today":"0");
+  const st=weekStats(i);
+  $("hWeekKm").textContent = Math.round(st.done*10)/10;
+  $("hWeekS").textContent = "of "+Math.round(st.plan*10)/10+" km planned";
+  $("thisWeek").innerHTML = weekCard(i,true);
+}
+function paceHint(kind){
+  const cur=current(weekly()); if(!cur) return "";
+  const hmp=cur.t/HM;
+  if(kind==="easy"||kind==="long") return "Easy effort: "+fmtP(hmp+45)+" to "+fmtP(hmp+75)+"/km, able to talk";
+  if(kind==="tt") return "Warm up 2 to 3 km, then run hard but even";
+  if(kind==="race") return "Goal pace "+fmtP(settings.goal/HM)+"/km; first 5 km slightly slower";
+  return "Easy running at "+fmtP(hmp+45)+" to "+fmtP(hmp+75)+"/km around the efforts";
+}
+function nextSession(t){
+  for(let i=weekIndexFor(t);i<W.length;i++) for(const s of W[i].s){ if(dayDate(i,s.day)>t) return {i,s}; }
+  return null;
+}
+
+function renderPlan(){
+  const now=weekIndexFor(todayDate());
+  $("weeks").innerHTML = W.map((w,i)=>{ const st=weekStats(i), pct=st.plan?Math.min(1,st.done/st.plan):0;
+    return `<button type="button" class="wk ${w.cut?"cut":""} ${i===now?"now":""} ${i===sel?"sel":""} ${w.race?"race":""}" data-w="${i}" aria-label="${wkName(i)}"><div class="f" style="height:${pct*100}%"></div><span>${w.n}</span><small>${fmtD(wkStart(i)).replace(" ","&nbsp;")}</small></button>`; }).join("");
+  $("planWeek").innerHTML = weekCard(sel,true);
+  const b=$("weeks").querySelector(".sel"); if(b) b.scrollIntoView({inline:"center",block:"nearest",behavior:"instant"});
+}
+
+function renderProgress(){
+  const ws=weekly(), cur=current(ws);
+  $("pGoalLbl").textContent = "Goal "+fmtT(settings.goal)+" · "+fmtP(settings.goal/HM)+"/km";
+  // chart
+  const Wd=360,H=220,L=40,R=10,T=10,B=26;
+  const vals=ws.filter(Boolean).map(p=>p.t).concat([settings.goal]);
+  let yMin=Math.floor((Math.min(...vals)-300)/300)*300, yMax=Math.ceil((Math.max(...vals)+300)/300)*300;
+  if(yMax-yMin<1800) yMax=yMin+1800;
+  const n=W.length+1, x=k=>L+(Wd-L-R)*k/(n-1), y=t=>T+(H-T-B)*(1-(t-yMin)/(yMax-yMin));
+  const step=(yMax-yMin)>3600?900:600;
+  let g=`<rect x="${L}" y="${y(settings.goal)}" width="${Wd-L-R}" height="${Math.max(0,y(yMin)-y(settings.goal))}" fill="var(--band)"/>`;
+  for(let t=yMin;t<=yMax;t+=step) g+=`<line x1="${L}" x2="${Wd-R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)"/><text x="${L-6}" y="${y(t)+3}" text-anchor="end">${fmtT(t).replace(/:00$/,"")}</text>`;
+  g+=`<line x1="${L}" x2="${Wd-R}" y1="${y(settings.goal)}" y2="${y(settings.goal)}" stroke="var(--accent)" stroke-dasharray="4 4"/><text x="${Wd-R-2}" y="${y(settings.goal)-4}" text-anchor="end" style="fill:var(--accent)">Goal ${fmtT(settings.goal).replace(/:00$/,"")}</text>`;
+  [[0,"Start"],[8,"W8"],[16,"W16"],[25,"Race"]].forEach(([k,l])=>g+=`<text x="${x(k)}" y="${H-8}" text-anchor="middle">${l}</text>`);
+  const nowK=weekIndexFor(todayDate())+1; g+=`<line x1="${x(nowK)}" x2="${x(nowK)}" y1="${T}" y2="${H-B}" stroke="var(--muted)" stroke-dasharray="2 3" opacity=".6"/>`;
+  const pts=ws.map((p,k)=>p?{...p,k}:null).filter(Boolean);
+  if(pts.length>1) g+=`<polyline fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" points="${pts.map(p=>x(p.k)+","+y(p.t)).join(" ")}"/>`;
+  pts.forEach((p,j)=>{ const last=j===pts.length-1; g+=`<circle cx="${x(p.k)}" cy="${y(p.t)}" r="${last?5:3.5}" fill="${p.tt?"var(--accent)":"var(--surface)"}" stroke="var(--accent)" stroke-width="2"/>`; if(last) g+=`<text x="${x(p.k)+(x(p.k)>Wd-70?-8:8)}" y="${y(p.t)-8}" text-anchor="${x(p.k)>Wd-70?"end":"start"}" style="fill:var(--ink);font-weight:600;font-size:11px">${fmtT(p.t)}</text>`; });
+  $("chart").innerHTML=g;
+  // stats
+  let km=0,runs=0,str=0,planned=0; const t=todayDate();
+  Object.values(log).forEach(e=>{ if(e.strength){ if(e.done) str++; } else if(e.km&&e.week>=0){ km+=e.km; runs++; } });
+  W.forEach((w,i)=>w.s.forEach(s=>{ if(dayDate(i,s.day)<=t) planned+=s.km; }));
+  $("sKm").textContent=Math.round(km); $("sKmS").textContent="of "+Math.round(planned)+" planned";
+  $("sRuns").textContent=runs; $("sStr").textContent=str;
+  // paces
+  if(!cur){ $("paces").innerHTML='<p class="small muted">Log a run to work out your paces.</p>'; }
+  else { const hmp=cur.t/HM; const rows=[["Easy and long runs","Conversational",fmtP(hmp+45)+"–"+fmtP(hmp+75)],["Half marathon pace","Comfortably hard",fmtP(hmp)],["Goal race pace","For "+fmtT(settings.goal),fmtP(settings.goal/HM)],["Tempo","Controlled discomfort",fmtP(hmp-12)],["10k pace","Hard, repeatable",fmtP(hmp-22)]];
+    $("paces").innerHTML=rows.map(r=>`<div class="pace"><div><b>${r[0]}</b><small>${r[1]}</small></div><span class="num">${r[2]}<span class="small muted">/km</span></span></div>`).join(""); }
+  // history
+  const runsList=Object.entries(log).filter(([k,e])=>!e.strength&&e.km&&e.sec).sort((a,b)=>(b[1].date||"").localeCompare(a[1].date||""));
+  $("hist").innerHTML = runsList.length ? runsList.map(([k,e])=>`<div class="hrow"><div><b>${e.week<0?"Starting test":(e.date?fmtD(new Date(e.date+"T12:00")):"")}</b> <span class="small muted">${e.week>=0?wkName(e.week)+" · ":""}${({easy:"Easy",long:"Long",workout:"Workout",tt:"Time trial",race:"Race"})[e.kind]||""}</span></div><div class="num">${e.km} km</div><div class="num">${fmtP(e.sec/e.km)}/km</div></div>`).join("") : '<p class="small muted">No runs yet.</p>';
+}
+
+function renderMore(){
+  $("goalIn").value = fmtT(settings.goal);
+  $("goalPace").textContent = "Goal pace "+fmtP(settings.goal/HM)+"/km";
+  $("mCount").textContent = Object.values(log).filter(e=>!e.strength&&e.km).length;
+}
+
+function render(){ ({today:renderToday,plan:renderPlan,progress:renderProgress,more:renderMore})[view](); }
+function go(v){
+  view=v;
+  document.querySelectorAll(".screen").forEach(s=>s.hidden = s.id!=="v-"+v);
+  document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-current", b.dataset.v===v?"page":"false"));
+  render(); window.scrollTo(0,0);
+}
+
+// ---------- sheet ----------
+let editing=null;
+function openSheet(i,day){
+  const s=W[i].s.find(x=>x.day===day); const id=docId(i,day), e=log[id];
+  editing={i,day,id,s};
+  $("shWhen").textContent = wkName(i)+" · "+fmtLong(dayDate(i,day));
+  $("shTitle").textContent = s.text;
+  $("shPlan").textContent = "Planned "+s.km+" km. "+paceHint(s.kind);
+  $("fKm").value = e&&e.km?e.km:"";
+  $("fKm").placeholder = s.km;
+  $("fKind").value = (e&&e.kind)||s.kind;
+  const sec=e&&e.sec||0;
+  $("fH").value = sec>=3600?Math.floor(sec/3600):"";
+  $("fM").value = sec?Math.floor(sec%3600/60):"";
+  $("fS").value = sec?pad(sec%60):"";
+  $("fNote").value = e&&e.note||"";
+  $("shErr").hidden=true; $("shClear").hidden=!(e&&e.km);
+  $("shSave").textContent = e&&e.km?"Update run":"Save run";
+  calc();
+  $("scrim").classList.add("open"); $("sheet").classList.add("open");
+}
+function closeSheet(){ $("scrim").classList.remove("open"); $("sheet").classList.remove("open"); document.activeElement&&document.activeElement.blur(); editing=null; }
+function readTime(){ const h=+($("fH").value||0), m=+($("fM").value||0), s=+($("fS").value||0); if([h,m,s].some(v=>!isFinite(v)||v<0)||m>=60&&h>0||s>=60) return null; const t=h*3600+m*60+s; return t>0?t:null; }
+function readKm(){ const v=parseFloat(($("fKm").value||"").replace(",",".")); return v>0&&v<60?v:null; }
+function calc(){ const km=readKm(), t=readTime(); $("shCalc").innerHTML = km&&t ? `Pace <b>${fmtP(t/km)}/km</b>`+((()=>{const k=$("fKind").value; const e=estimate({km,sec:t,kind:k}); return e?` · suggests <b>${fmtT(e.t)}</b> for the half`:"";})()) : ""; }
+["fKm","fH","fM","fS","fKind"].forEach(id=>$(id).addEventListener("input",calc));
+$("sheet").addEventListener("submit",ev=>{
+  ev.preventDefault(); if(!editing) return;
+  const km=readKm(), sec=readTime(), err=$("shErr"); err.hidden=true;
+  if(!km){ err.textContent="Enter the distance in km, for example 6 or 6.2."; err.hidden=false; return; }
+  if(!sec){ err.textContent="Enter your time, for example 0 h, 35 min, 20 sec."; err.hidden=false; return; }
+  const {i,day,id}=editing;
+  log[id]={week:i,day,km,sec,kind:$("fKind").value,note:$("fNote").value.trim().slice(0,200),date:isoD(dayDate(i,day)),updated:new Date().toISOString()};
+  if(save(KEY,log)){ haptic(); toast("Run saved · "+fmtP(sec/km)+"/km"); }
+  closeSheet(); render();
+});
+$("shCancel").onclick=closeSheet; $("scrim").onclick=closeSheet;
+$("shClear").onclick=()=>{ if(!editing) return; if(!confirm("Clear this run?")) return; delete log[editing.id]; save(KEY,log); toast("Run cleared"); closeSheet(); render(); };
+
+// ---------- events ----------
+document.querySelector(".tabs").addEventListener("click",ev=>{ const b=ev.target.closest("button"); if(b) go(b.dataset.v); });
+document.addEventListener("click",ev=>{
+  const ses=ev.target.closest(".sess"); if(ses){ openSheet(+ses.dataset.i, ses.dataset.day); return; }
+  const lg=ev.target.closest("[data-log]"); if(lg){ const [i,d]=lg.dataset.log.split("|"); openSheet(+i,d); return; }
+  const st=ev.target.closest("[data-str]"); if(st){ const id=st.dataset.str, on=!(log[id]&&log[id].done); if(on) log[id]={week:+st.dataset.i,strength:true,done:true,updated:new Date().toISOString()}; else delete log[id]; save(KEY,log); haptic(); if(on) toast("Strength session done"); render(); return; }
+  const wk=ev.target.closest("[data-w]"); if(wk){ sel=+wk.dataset.w; renderPlan(); return; }
+});
+$("jumpNow").onclick=()=>{ sel=weekIndexFor(todayDate()); renderPlan(); };
+$("goalSave").onclick=()=>{ const t=parseT($("goalIn").value); if(!t||t<3600||t>14400){ toast("Use h:mm:ss, e.g. 1:39:00"); return; } settings.goal=t; save(SKEY,settings); toast("Goal set to "+fmtT(t)); renderMore(); };
+$("exportBtn").onclick=async()=>{
+  const data=JSON.stringify({app:"hm-training",version:1,exported:new Date().toISOString(),settings,log},null,1);
+  const name="half-marathon-backup-"+isoD(new Date())+".json";
+  try{ const f=new File([data],name,{type:"application/json"}); if(navigator.canShare&&navigator.canShare({files:[f]})){ await navigator.share({files:[f],title:"Half marathon backup"}); return; } }catch(e){ if(e&&e.name==="AbortError") return; }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([data],{type:"application/json"})); a.download=name; document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=async ev=>{
+  const f=ev.target.files[0]; ev.target.value=""; if(!f) return;
+  try{ const d=JSON.parse(await f.text()); if(!d||d.app!=="hm-training"||typeof d.log!=="object") throw 0;
+    if(!confirm("Replace the runs on this phone with the "+Object.keys(d.log).length+" entries in this backup?")) return;
+    log=d.log; settings=Object.assign({},settings,d.settings||{},{seeded:true}); save(KEY,log); save(SKEY,settings); toast("Backup restored"); render();
+  }catch(e){ toast("That file isn't a backup from this app"); }
+};
+$("resetBtn").onclick=()=>{ if(!confirm("Erase every logged run and strength session on this phone? Export a backup first if you might want them.")) return; log={}; save(KEY,log); toast("All runs erased"); render(); };
+
+// Install tip: only in a browser tab on iPhone/iPad, not once installed
+const standalone = window.navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+if(!standalone && /iPhone|iPad|iPod/.test(navigator.userAgent)) $("installTip").hidden=false;
+
+// Refresh when returning to the app on a new day
+let lastDay=isoD(todayDate());
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden && isoD(todayDate())!==lastDay){ lastDay=isoD(todayDate()); sel=weekIndexFor(todayDate()); render(); } });
+
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+go("today");
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "name": "Half Marathon Training",
+  "short_name": "HM Training",
+  "description": "24-week half marathon plan with run logging and projected finish time.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f141c",
+  "theme_color": "#0f141c",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
