@@ -1,5 +1,5 @@
 // Offline cache for the training app. Bump VERSION whenever any file changes.
-const VERSION = "hm-v2";
+const VERSION = "hm-v3";
 const FILES = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {
